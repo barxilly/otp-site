@@ -1,0 +1,38 @@
+.app {
+    height: 100vh;
+    width: 100vw;
+}
+
+.app-stack {
+    text-align: center;
+}
+
+.qr-icon {
+    cursor: pointer;
+    width: 1.2em;
+    height: 1.2em;
+}
+
+.acb {
+    position: absolute !important;
+    right: 1em;
+    bottom: 1em;
+}
+
+.nav-card {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    float: left;
+}
+
+.title {
+    font-size: 2rem !important;
+    font-weight: bold !important;
+    margin-bottom: 0em !important;
+}
+
+.subtitle {
+    font-size: 1rem !important;
+    color: #444 !important;
+    margin-top: 0em !important;
+}
