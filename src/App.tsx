@@ -5,6 +5,9 @@ import { FaEye, FaEyeSlash, FaQrcode, FaTrash } from 'react-icons/fa'
 import { TOTP } from 'totp-generator'
 import { FaBarsStaggered } from 'react-icons/fa6'
 import jsQR from 'jsqr'
+import { TbCopy } from 'react-icons/tb'
+import QRCode from 'qrcode'
+import { PiExportBold } from 'react-icons/pi'
 
 const issuerIcons = {
   "microsoft": "https://cdn.pixabay.com/photo/2021/08/10/15/36/microsoft-6536268_1280.png",
@@ -141,6 +144,21 @@ function generate() {
     return
   }
 
+  // If input includes non-base32 characters (A-Z, 2-7, =)
+  if (!/^([A-Z2-7]+={0,2})+$/.test(secretInput.value)) {
+    secretInput.style.border = '1px solid red';
+    secretInput.focus();
+    alert('Secret key must be base32 encoded. (A-Z, 2-7, =)');
+    return;
+  }
+
+  if (secretInput?.value.length < 5) {
+    secretInput.style.border = '1px solid red';
+    secretInput.focus();
+    alert('Secret key must be at least 5 characters long');
+    return;
+  }
+
   const otpc = document.getElementById('otpc') as HTMLElement
   const key = document.getElementById('s') as HTMLInputElement
   const label = document.getElementById('l') as HTMLInputElement
@@ -149,8 +167,10 @@ function generate() {
     <Stack>
       <Flex>
         <img className='saved-icon' src={issuerIcons[issuer?.value as keyof typeof issuerIcons] || 'https://static-00.iconduck.com/assets.00/key-icon-512x510-f5hzglej.png'} />
-        <Text className='saved-label'>{label?.value}</Text>
+        <Text className='saved-label'>{label?.value || "Key"}</Text>
         <FaTrash className='delete' onClick={deleteOTP(key?.value)} />
+        <TbCopy className='copy' onClick={copyOTP(key?.value)} />
+        <PiExportBold className='export' onClick={exportOTP(key?.value)} />
       </Flex>
       <Text className='otp'>123456</Text>
       <Progress value={50} />
@@ -162,7 +182,7 @@ function generate() {
 
   // Save to localStorage
   const saved = JSON.parse(localStorage.getItem('saved') || '{}')
-  saved[key.value] = { label: label.value, issuer: issuer.value }
+  saved[key.value] = { label: label.value || "Key", issuer: issuer.value }
   localStorage.setItem('saved', JSON.stringify(saved))
 }
 
@@ -179,6 +199,8 @@ function example() {
         <img className='saved-icon' src={issuerIcons[issuer as keyof typeof issuerIcons] || 'https://static-00.iconduck.com/assets.00/key-icon-512x510-f5hzglej.png'} />
         <Text className='saved-label'>{label}</Text>
         <FaTrash className='delete' onClick={deleteOTP(key)} />
+        <TbCopy className='copy' onClick={copyOTP(key)} />
+        <PiExportBold className='export' onClick={exportOTP(key)} />
       </Flex>
       <Text className='otp'>123456</Text>
       <Progress value={50} />
@@ -203,6 +225,8 @@ function loaded() {
           <img className='saved-icon' src={src} />
           <Text className='saved-label'>{saved[key].label}</Text>
           <FaTrash className='delete' onClick={deleteOTP(key)} />
+          <TbCopy className='copy' onClick={copyOTP(key)} />
+          <PiExportBold className='export' onClick={exportOTP(key)} />
         </Flex>
         <Text className='otp'>123456</Text>
         <Progress value={50} />
@@ -251,5 +275,38 @@ function deleteOTP(key: string) {
     window.location.reload()
   }
 }
+
+function copyOTP(key: string) {
+  return () => {
+    const otpElement = document.querySelector(`#otp-c-${key} .otp`) as HTMLElement;
+    if (otpElement) {
+      const otpText = otpElement.innerText;
+      navigator.clipboard.writeText(otpText).then(() => {
+        alert('OTP copied to clipboard');
+      }).catch(err => {
+        console.error('Failed to copy OTP: ', err);
+      });
+    }
+  }
+}
+
+function exportOTP(key: string) {
+  return () => {
+    const saved = JSON.parse(localStorage.getItem('saved') || '{}')
+    const otp = saved[key]
+    const url = `otpauth://totp/${otp.issuer}:${otp.label}?secret=${key}&issuer=${otp.issuer}`
+    QRCode.toDataURL(url, (err, url) => {
+      if (err) {
+        console.error(err)
+        return
+      }
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${otp.issuer}-${otp.label}.png`
+      a.click()
+    })
+  }
+}
+
 
 export default App

@@ -47,12 +47,16 @@ body {
     font-size: 2rem !important;
     font-weight: bold !important;
     margin-bottom: 0em !important;
+    user-select: none;
+    cursor: default;
 }
 
 .subtitle {
     font-size: 1rem !important;
     color: #444 !important;
     margin-top: 0em !important;
+    user-select: none;
+    cursor: default;
 }
 
 .mantine-TextInput-input,
@@ -77,6 +81,8 @@ body {
     margin-top: 1em;
     height: 4.2em;
     transition: height 0.2s ease-in-out;
+    user-select: none;
+    cursor: default;
 }
 
 .otp-saved:hover {
@@ -116,4 +122,30 @@ body {
 .delete:hover {
     cursor: pointer;
     color: #f00;
+}
+
+.copy {
+    color: #88f;
+    position: absolute;
+    right: 2.5em;
+    transform: scale(1.1);
+    top: 1.5em;
+}
+
+.copy:hover {
+    cursor: pointer;
+    color: rgb(89, 0, 255);
+}
+
+.export {
+    color: rgb(136, 207, 255);
+    position: absolute;
+    transform: scale(1.2);
+    right: 4em;
+    top: 1.5em;
+}
+
+.export:hover {
+    cursor: pointer;
+    color: rgb(0, 174, 255);
 }
