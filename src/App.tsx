@@ -209,6 +209,10 @@ function example() {
   const container = document.createElement('div')
   otpc.appendChild(container)
   ReactDOM.render(card, container)
+  // Save to localStorage
+  const saved = JSON.parse(localStorage.getItem('saved') || '{}')
+  saved[key] = { label: label || "Key", issuer: issuer }
+  localStorage.setItem('saved', JSON.stringify(saved))
 }
 
 function loaded() {
