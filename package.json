@@ -13,6 +13,7 @@
         "@mantine/code-highlight": "^7.14.1",
         "@mantine/core": "^7.14.1",
         "@mantine/hooks": "^7.14.1",
+        "base32": "^0.0.7",
         "jsqr": "^1.4.0",
         "qr-scanner": "^1.4.2",
         "react": "^18.3.1",

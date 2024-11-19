@@ -1,14 +1,21 @@
-import { ActionIcon, Button, Card, Center, Flex, Image, MantineProvider, Popover, Progress, Stack, Text, TextInput, Tooltip } from '@mantine/core'
+import { ActionIcon, Button, Card, Center, Flex, MantineProvider, Popover, Progress, Stack, Text, TextInput, Tooltip } from '@mantine/core'
 import ReactDOM from 'react-dom'
 import './App.css'
-import { FaMicrosoft, FaQrcode } from 'react-icons/fa'
+import { FaMicrosoft, FaQrcode, FaTrash } from 'react-icons/fa'
 import { TOTP } from 'totp-generator'
-import { FaBarsStaggered } from 'react-icons/fa6'
+import { FaBarsStaggered, FaDeleteLeft } from 'react-icons/fa6'
 import jsQR from 'jsqr'
 import { CgNametag } from 'react-icons/cg'
 
-
+const issuerIcons = {
+  "microsoft": "https://cdn.pixabay.com/photo/2021/08/10/15/36/microsoft-6536268_1280.png",
+  "google": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1200px-Google_%22G%22_logo.svg.png",
+  "amazon": "https://static.wikia.nocookie.net/logopedia/images/f/fc/Amazon.com_Favicon_2.svg/revision/latest?cb=20160808095346",
+  "apple": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Apple_logo_grey.svg/505px-Apple_logo_grey.svg.png",
+  "twitch": "https://images.seeklogo.com/logo-png/27/2/twitch-logo-png_seeklogo-274042.png?v=638663246940000000",
+}
 function App() {
+  const qr = <FaQrcode className='qr-icon' onClick={() => qrF()} />
   return (
     <>
       <main>
@@ -17,7 +24,7 @@ function App() {
             <Text className='title'>WebOTP</Text>
             <Text className='subtitle'>Sleek and Secure TOTP Generator</Text>
             <Tooltip label='Base32 encoded string used to generate the TOTP' position='top' withArrow>
-              <TextInput id='s' required type='password' placeholder='Secret Key' rightSection={<FaQrcode className='qr-icon' onClick={() => qrF()} />} />
+              <TextInput id='s' required type='password' placeholder='Secret Key' rightSection={qr} />
             </Tooltip>
             <Tooltip label='A label for you to distinguish between codes' position='top' withArrow>
               <TextInput id='l' placeholder='Label' />
@@ -70,7 +77,7 @@ function qrF() {
     reader.readAsDataURL(file)
     reader.onloadend = async () => {
       const data = reader.result
-      const image = new Image()
+      const image = document.createElement('img')
       image.src = data as string
       image.onload = () => {
         const canvas = document.createElement('canvas')
@@ -101,7 +108,8 @@ function qrF() {
 }
 
 function generate() {
-  if (!document.getElementById('s')?.value) {
+  const secretInput = document.getElementById('s') as HTMLInputElement;
+  if (!secretInput?.value) {
     const secretInput = document.getElementById('s') as HTMLInputElement;
     if (secretInput) {
       secretInput.style.border = '1px solid red';
@@ -114,18 +122,12 @@ function generate() {
   const key = document.getElementById('s') as HTMLInputElement
   const label = document.getElementById('l') as HTMLInputElement
   const issuer = document.getElementById('i') as HTMLInputElement
-  const issuerIcons = {
-    "microsoft": "https://cdn.pixabay.com/photo/2021/08/10/15/36/microsoft-6536268_1280.png",
-    "google": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1200px-Google_%22G%22_logo.svg.png",
-    "amazon": "https://static.wikia.nocookie.net/logopedia/images/f/fc/Amazon.com_Favicon_2.svg/revision/latest?cb=20160808095346",
-    "apple": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Apple_logo_black.svg/1200px-Apple_logo_black.svg.png",
-    "twitch": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Twitch_logo.svg/1200px-Twitch_logo.svg.png",
-  }
   const card = <MantineProvider><Card className='otp-saved' id={"otp-c-" + key?.value} shadow="sm" padding="md" radius="md" withBorder>
     <Stack>
       <Flex>
         <img className='saved-icon' src={issuerIcons[issuer?.value as keyof typeof issuerIcons] || 'https://static-00.iconduck.com/assets.00/key-icon-512x510-f5hzglej.png'} />
         <Text className='saved-label'>{label?.value}</Text>
+        <FaTrash className='delete' onClick={deleteOTP(key?.value)} />
       </Flex>
       <Text className='otp'>123456</Text>
       <Progress value={50} />
@@ -142,7 +144,26 @@ function generate() {
 }
 
 function example() {
-  console.log('example')
+  const otpc = document.getElementById('otpc') as HTMLElement
+  // Generate random base32 key (only characters A-Z and 2-7)
+  const key = Math.random().toString(36).replace(/[^a-z2-7]/g, '').substr(2, 16)
+  console.log(key)
+  const label = ["Key", "OTP", "Code"][Math.floor(Math.random() * 3)]
+  const issuer = ["microsoft", "google", "amazon", "apple", "twitch"][Math.floor(Math.random() * 5)]
+  const card = <MantineProvider><Card className='otp-saved' id={"otp-c-" + key} shadow="sm" padding="md" radius="md" withBorder>
+    <Stack>
+      <Flex>
+        <img className='saved-icon' src={issuerIcons[issuer as keyof typeof issuerIcons] || 'https://static-00.iconduck.com/assets.00/key-icon-512x510-f5hzglej.png'} />
+        <Text className='saved-label'>{label}</Text>
+        <FaTrash className='delete' onClick={deleteOTP(key)} />
+      </Flex>
+      <Text className='otp'>123456</Text>
+      <Progress value={50} />
+    </Stack>
+  </Card></MantineProvider>
+  const container = document.createElement('div')
+  otpc.appendChild(container)
+  ReactDOM.render(card, container)
 }
 
 function loaded() {
@@ -152,19 +173,13 @@ function loaded() {
   const otpc = document.getElementById('otpc')
   for (const key in saved) {
     if (!saved.hasOwnProperty(key)) continue;
-    const issuerIcons = {
-      "microsoft": "https://cdn.pixabay.com/photo/2021/08/10/15/36/microsoft-6536268_1280.png",
-      "google": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1200px-Google_%22G%22_logo.svg.png",
-      "amazon": "https://static.wikia.nocookie.net/logopedia/images/f/fc/Amazon.com_Favicon_2.svg/revision/latest?cb=20160808095346",
-      "apple": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Apple_logo_black.svg/1200px-Apple_logo_black.svg.png",
-      "twitch": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Twitch_logo.svg/1200px-Twitch_logo.svg.png",
-    }
     const src = issuerIcons[saved[key].issuer.toLowerCase() as keyof typeof issuerIcons] || 'https://static-00.iconduck.com/assets.00/key-icon-512x510-f5hzglej.png'
     const card = <MantineProvider><Card className='otp-saved' id={"otp-c-" + key} shadow="sm" padding="md" radius="md" withBorder>
       <Stack>
         <Flex>
           <img className='saved-icon' src={src} />
           <Text className='saved-label'>{saved[key].label}</Text>
+          <FaTrash className='delete' onClick={deleteOTP(key)} />
         </Flex>
         <Text className='otp'>123456</Text>
         <Progress value={50} />
@@ -180,14 +195,40 @@ function loaded() {
     const otpc = document.getElementById('otpc')
     const divs = otpc?.children as HTMLCollectionOf<HTMLElement>
     for (let i = 0; i < divs.length; i++) {
-      const card = divs[i].children[1] as HTMLElement
-      const otp = divs[i].getElementsByClassName('otp')[0] as HTMLElement
-      const key = card.id.split('otp-c-')[1]
-      const secret = key
-      const otpValue = TOTP.generate(secret).otp
-      otp.innerText = otpValue
+      try {
+        const card = divs[i].children[1] as HTMLElement
+        const otp = divs[i].getElementsByClassName('otp')[0] as HTMLElement
+        const key = card.id.split('otp-c-')[1]
+        console.log(key)
+        const secret = key
+        const otpValue = TOTP.generate(secret).otp
+        otp.innerText = otpValue
+        const prog = divs[i].getElementsByClassName('mantine-Progress-section')[0] as HTMLElement
+        const expiry = TOTP.generate(secret).expires
+        const current = new Date().getTime()
+        const thirtybeforeexpiry = expiry - 30000
+        const timeleft = thirtybeforeexpiry - current
+        const percentage = (((timeleft / 30000) * 100) * -1).toFixed(0)
+        // Flip percentage to positive if negative
+        prog.style.width = percentage + '%'
+      } catch (e) {
+        console.error(e)
+        continue;
+      }
     }
-  }, 80)
+  }, 500)
+}
+
+function deleteOTP(key: string) {
+  return () => {
+    const otpc = document.getElementById('otpc')
+    const card = document.getElementById('otp-c-' + key)
+    card?.remove();
+    const saved = JSON.parse(localStorage.getItem('saved') || '{}')
+    delete saved[key]
+    localStorage.setItem('saved', JSON.stringify(saved))
+    window.location.reload()
+  }
 }
 
 export default App
