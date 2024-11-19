@@ -10,6 +10,19 @@ body {
 
 .app-stack {
     text-align: center;
+    width: 20em;
+}
+
+.eye {
+    position: absolute;
+    top: 0.6em;
+    right: -1.7em;
+    color: grey;
+    cursor: pointer;
+}
+
+.hidden {
+    display: none;
 }
 
 .qr-icon {

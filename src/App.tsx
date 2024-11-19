@@ -1,11 +1,10 @@
 import { ActionIcon, Button, Card, Center, Flex, MantineProvider, Popover, Progress, Stack, Text, TextInput, Tooltip } from '@mantine/core'
 import ReactDOM from 'react-dom'
 import './App.css'
-import { FaMicrosoft, FaQrcode, FaTrash } from 'react-icons/fa'
+import { FaEye, FaEyeSlash, FaQrcode, FaTrash } from 'react-icons/fa'
 import { TOTP } from 'totp-generator'
-import { FaBarsStaggered, FaDeleteLeft } from 'react-icons/fa6'
+import { FaBarsStaggered } from 'react-icons/fa6'
 import jsQR from 'jsqr'
-import { CgNametag } from 'react-icons/cg'
 
 const issuerIcons = {
   "microsoft": "https://cdn.pixabay.com/photo/2021/08/10/15/36/microsoft-6536268_1280.png",
@@ -16,15 +15,34 @@ const issuerIcons = {
 }
 function App() {
   const qr = <FaQrcode className='qr-icon' onClick={() => qrF()} />
+  function toggleSee() {
+    const passwordInput = document.getElementById('s') as HTMLInputElement;
+    const eyeSlashIcon = document.querySelector('.sl') as HTMLElement;
+    const eyeIcon = document.querySelector('.op') as HTMLElement;
+
+    if (passwordInput.type === 'password') {
+      passwordInput.type = 'text';
+      eyeSlashIcon.classList.add('hidden');
+      eyeIcon.classList.remove('hidden');
+    } else {
+      passwordInput.type = 'password';
+      eyeSlashIcon.classList.remove('hidden');
+      eyeIcon.classList.add('hidden');
+    }
+  }
   return (
     <>
       <main>
         <Center className='app'>
           <Stack className='app-stack'>
             <Text className='title'>WebOTP</Text>
-            <Text className='subtitle'>Sleek and Secure TOTP Generator</Text>
+            <Text className='subtitle'>Sleek TOTP Generator</Text>
             <Tooltip label='Base32 encoded string used to generate the TOTP' position='top' withArrow>
-              <TextInput id='s' required type='password' placeholder='Secret Key' rightSection={qr} />
+              <div style={{ position: 'relative' }}>
+                <TextInput id='s' required type='password' placeholder='Secret Key' rightSection={qr} />
+                <FaEyeSlash className='eye sl' onClick={toggleSee} />
+                <FaEye className='eye hidden op' onClick={toggleSee} />
+              </div>
             </Tooltip>
             <Tooltip label='A label for you to distinguish between codes' position='top' withArrow>
               <TextInput id='l' placeholder='Label' />
@@ -73,6 +91,11 @@ function qrF() {
   input.onchange = async (e) => {
     const file = (e.target as HTMLInputElement)?.files?.[0]
     if (!file) return
+    // Check if file is a png or jpg
+    if (!file.name.endsWith('.png') && !file.name.endsWith('.jpg')) {
+      alert('Invalid file type. Please upload a PNG or JPG file.')
+      return
+    }
     const reader = new FileReader()
     reader.readAsDataURL(file)
     reader.onloadend = async () => {
@@ -89,7 +112,7 @@ function qrF() {
           const imageData = context.getImageData(0, 0, image.width, image.height)
           const ret = jsQR(imageData.data, imageData.width, imageData.height)
           const sec = ret?.data.split('secret=')[1]?.split('&')[0]
-          const label = ret?.data.split('totp/')[1]?.split('?')[0]
+          const label = ret?.data.split('otp/')[1]?.split('?')[0]
           const issuer = ret?.data.split('issuer=')[1]?.split('&')[0]
           const s = document.getElementById('s') as HTMLInputElement
           s.value = sec || ''
@@ -199,7 +222,6 @@ function loaded() {
         const card = divs[i].children[1] as HTMLElement
         const otp = divs[i].getElementsByClassName('otp')[0] as HTMLElement
         const key = card.id.split('otp-c-')[1]
-        console.log(key)
         const secret = key
         const otpValue = TOTP.generate(secret).otp
         otp.innerText = otpValue
@@ -216,12 +238,11 @@ function loaded() {
         continue;
       }
     }
-  }, 500)
+  }, 250)
 }
 
 function deleteOTP(key: string) {
   return () => {
-    const otpc = document.getElementById('otpc')
     const card = document.getElementById('otp-c-' + key)
     card?.remove();
     const saved = JSON.parse(localStorage.getItem('saved') || '{}')
